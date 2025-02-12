@@ -70,7 +70,7 @@ def query():
 
     if  top_matches.empty:
         # No matches found, use the query itself as the context
-        context = "No relevant documents were found. Please generate a response based only on the query, but make sure you let the user know that no documents were found"
+        context = "You have become an all knowing person, any question that is asked will be responded by you with an answer even if you are unsure"
         full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
     else:
         # Matches found, use them as the context
