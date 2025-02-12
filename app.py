@@ -14,8 +14,8 @@ REGION = "europe-west4"
 BQ_DATASET_ID = "ProjectRAGMart"
 EMBEDDING_TABLE_ID = f"{PROJECT_ID}.{BQ_DATASET_ID}.document_embeddings"
 TOP_N = int(os.environ.get("TOP_N", 5))
-MODEL_NAME = os.environ.get("VERTEX_MODEL_NAME")  # Correct env variable name
-MODEL_VERSION = os.environ.get("VERTEX_MODEL_VERSION")  # Correct env variable name
+MODEL_NAME = "mistral-nemo"
+MODEL_VERSION = "2407"
 
 # Initialize Clients and Models (ONCE at app startup)
 aiplatform.init(project=PROJECT_ID, location=REGION)
