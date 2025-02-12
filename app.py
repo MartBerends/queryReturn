@@ -27,6 +27,7 @@ mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID)
 def get_query_embedding(query_text):
     """Generate an embedding for the input query."""
     response = embedding_model.get_embeddings([query_text])
+    print(response)
     return response[0].values
 def get_top_matches(query_embedding, top_n=TOP_N):
     """Retrieve the top N documents that match the query embedding."""
