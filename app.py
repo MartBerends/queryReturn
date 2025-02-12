@@ -28,7 +28,6 @@ def get_query_embedding(query_text):
     """Generate an embedding for the input query."""
     response = embedding_model.get_embeddings([query_text])
     return response[0].values
-
 def get_top_matches(query_embedding, top_n=TOP_N):
     """Retrieve the top N documents that match the query embedding."""
     query_embedding_str = ', '.join(map(str, query_embedding))  # Convert embedding to string for SQL
@@ -39,15 +38,21 @@ def get_top_matches(query_embedding, top_n=TOP_N):
     SELECT 
         document_id, 
         text, 
-        SQRT(SUM(POW(embedding[OFFSET(i)] - query_embedding.embedding[OFFSET(i)], 2))) AS distance
-    FROM `{EMBEDDING_TABLE_ID}`, query_embedding, UNNEST(embedding) AS embedding WITH OFFSET i
+        SQRT(SUM(POW(e.value - query_embedding.embedding[OFFSET(i)], 2))) AS distance
+    FROM `{EMBEDDING_TABLE_ID}`, 
+         query_embedding, 
+         UNNEST(embedding) AS e WITH OFFSET i  -- Give alias 'e' to unnested embedding
     GROUP BY document_id, text
     ORDER BY distance ASC
     LIMIT {top_n}
     """
-    results = bq_client.query(query).to_dataframe()
-    return results
-
+    try:
+        # Execute the query and convert the results to a DataFrame
+        results = bq_client.query(query).to_dataframe()
+        return results
+    except Exception as e:
+        print(f"Error querying BigQuery: {e}")
+        return None
 
 
 
