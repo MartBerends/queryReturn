@@ -4,6 +4,8 @@ from google.cloud import bigquery
 from vertexai.preview.language_models import ChatModel  # Correct import
 from vertexai.language_models import TextEmbeddingModel
 from mistralai_gcp import MistralGoogleCloud # Correct import
+from google.cloud import aiplatform
+
 app = Flask(__name__)
 
 # Google Cloud Config
