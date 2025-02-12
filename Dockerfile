@@ -12,4 +12,4 @@ COPY . .
 # Set entry point to main.py
 #CMD ["python", "main.py"]
 
-CMD ["gunicorn", "--bind", ":8080", "--threads", "1", "main:app"]
+CMD ["gunicorn", "--bind", ":8080", "--threads", "1", "app:app"]
