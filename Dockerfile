@@ -1,7 +1,6 @@
 # Use the official Python 3.9 slim image
 FROM python:3.10-slim
 
-WORKDIR /app
 
 # Copy dependencies
 COPY requirements.txt .
