@@ -56,34 +56,42 @@ def get_top_matches(query_embedding, top_n=TOP_N):
 
 
 
+
 @app.route("/query", methods=["POST"])
 def query():
     data = request.get_json()
     query_text = data.get("query", "")
 
-    # ... (get embeddings and top matches - same as before)
+    # Step 1: Generate query embedding
     query_embedding = get_query_embedding(query_text)
 
     # Step 2: Retrieve top matching documents
     top_matches = get_top_matches(query_embedding)
-    context = "\n\n".join(top_matches["text"].tolist())
-    full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
 
+    if top_matches is None or top_matches.empty:
+        # No matches found, use the query itself as the context
+        context = "No relevant documents were found. Please generate a response based only on the query, but make sure you let the user know that no documents were found"
+        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
+    else:
+        # Matches found, use them as the context
+        context = "\n\n".join(top_matches["text"].tolist())
+        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
+
+    # Step 3: Call the model for response generation
     try:
         resp = mistral_client.chat.complete(
             model=f"{MODEL_NAME}-{MODEL_VERSION}",
             messages=[
-                {
-                    "role": "user",
-                    "content": full_prompt,
-                }
+                {"role": "user", "content": full_prompt},
             ],
         )
-        return resp.choices[0].message.content  # Extract content
+        return jsonify({
+            "response": resp.choices[0].message.content,
+            "sources": top_matches.to_dict(orient="records") if top_matches is not None else [],
+        })
     except Exception as e:
         print(f"Error generating response: {e}")
-        return "Error generating response", 500
-
+        return jsonify({"error": "Error generating response"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
