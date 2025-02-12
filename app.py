@@ -52,7 +52,7 @@ def get_top_matches(query_embedding, top_n=TOP_N):
         return results
     except Exception as e:
         print(f"Error querying BigQuery: {e}")
-        return None
+        return pd.DataFrame(columns=["document_id", "text"])
 
 
 
@@ -68,7 +68,7 @@ def query():
     # Step 2: Retrieve top matching documents
     top_matches = get_top_matches(query_embedding)
 
-    if top_matches is None or top_matches.empty:
+    if  top_matches.empty:
         # No matches found, use the query itself as the context
         context = "No relevant documents were found. Please generate a response based only on the query, but make sure you let the user know that no documents were found"
         full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
@@ -87,7 +87,7 @@ def query():
         )
         return jsonify({
             "response": resp.choices[0].message.content,
-            "sources": top_matches.to_dict(orient="records") if top_matches is not None else [],
+            "sources": top_matches.to_dict(orient="records") if not top_matches.empty else [],
         })
     except Exception as e:
         print(f"Error generating response: {e}")
