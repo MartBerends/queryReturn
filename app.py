@@ -33,10 +33,14 @@ def get_top_matches(query_embedding, top_n=TOP_N):
     """Retrieve the top N documents that match the query embedding."""
     query_embedding_str = ', '.join(map(str, query_embedding))  # Convert embedding to string for SQL
     query = f"""
+    WITH query_embedding AS (
+        SELECT ARRAY[{query_embedding_str}] AS embedding
+    )
     SELECT 
-        document_id, text, 
-        SQRT(SUM(POW(embedding[i] - ARRAY[{query_embedding_str}][OFFSET(i)], 2))) AS distance
-    FROM `{EMBEDDING_TABLE_ID}`, UNNEST(embedding) AS embedding WITH OFFSET i
+        document_id, 
+        text, 
+        SQRT(SUM(POW(embedding[OFFSET(i)] - query_embedding.embedding[OFFSET(i)], 2))) AS distance
+    FROM `{EMBEDDING_TABLE_ID}`, query_embedding, UNNEST(embedding) AS embedding WITH OFFSET i
     GROUP BY document_id, text
     ORDER BY distance ASC
     LIMIT {top_n}
