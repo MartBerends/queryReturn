@@ -1,71 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Question Answering System</title>
+  <title>Stel een Vraag</title>
   <style>
+    /* Algemene Stijlen */
     body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: #f4f4f9;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #f4f4f9;
+      background-color: #121212;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100vh;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_of_the_Tweede_Kamer.svg');
+      background-size: 50%; /* Adjust size of the logo */
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed; /* Keeps the logo in place during scrolling */
+      opacity: 0.2; /* Makes the logo subtle */
     }
+
     h1 {
-      color: #333;
-    }
-    #response {
+      text-align: center;
+      color: #00bcd4;
       margin-top: 20px;
+      animation: fadeIn 1s ease-out;
     }
+
+    #response {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      margin-bottom: 10px;
+    }
+
+    #response h3 {
+      color: #f4f4f9;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    #response p {
+      font-size: 1.2em;
+      margin-top: 10px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    #response ul {
+      list-style: none;
+      padding: 0;
+    }
+
     .source-link {
       margin-top: 10px;
+      animation: fadeInUp 0.8s ease-out;
     }
-    input, button {
+
+    .source-link a {
+      color: #00bcd4;
+      text-decoration: none;
+    }
+
+    .source-link a:hover {
+      color: #26c6da;
+    }
+
+    /* Inputsectie */
+    .input-section {
+      background-color: #1e1e1e;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    input {
       font-size: 1.2em;
       padding: 10px;
       margin: 10px 0;
-      width: 100%;
+      background-color: #292929;
+      border: 2px solid #00bcd4;
+      border-radius: 5px;
+      color: #f4f4f9;
     }
+
+    input:focus {
+      outline: none;
+      border-color: #26c6da;
+      box-shadow: 0 0 5px #26c6da;
+    }
+
     button {
-      background-color: #007bff;
+      font-size: 1.2em;
+      padding: 10px;
+      background-color: #00bcd4;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      transition: background-color 0.3s ease-in-out;
     }
+
     button:hover {
-      background-color: #0056b3;
+      background-color: #26c6da;
+    }
+
+    /* Animaties */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>Stel vraag</h1>
-  <input id="question" type="text" placeholder="Stel je vraag hier:" />
-  <button onclick="askQuestion()">Gaan</button>
+  <h1>Stel een Vraag</h1>
+
   <div id="response">
-    <h3>Antwoord</h3>
-    <p id="answer"></p>
-    <h4>Bronnen gebruikt</h4>
+    <h3>Antwoord:</h3>
+    <p id="answer">Je antwoord verschijnt hier.</p>
+    <h4>Bronnen:</h4>
     <ul id="sources"></ul>
+  </div>
+
+  <div class="input-section">
+    <input id="question" type="text" placeholder="Typ je vraag hier..." />
+    <button onclick="askQuestion()">Verstuur</button>
   </div>
 
   <script>
     async function askQuestion() {
       const question = document.getElementById("question").value;
       if (!question) {
-        alert("wel iets invullen");
+        alert("Vul een vraag in!");
         return;
       }
 
-      // Show loading message
-      document.getElementById("answer").innerText = "Laden";
-      document.getElementById("sources").innerHTML = "";
+      // Toon een laadbericht
+      const answerElement = document.getElementById("answer");
+      answerElement.innerText = "Bezig met laden...";
+      answerElement.style.animation = "fadeIn 0.5s ease-out";
+      const sourcesList = document.getElementById("sources");
+      sourcesList.innerHTML = "";
 
       try {
-        // Send the question to the Flask backend
+        // Verstuur de vraag naar de Flask-backend
         const response = await fetch("/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -74,27 +160,25 @@
 
         const data = await response.json();
 
-        // Display the response
+        // Toon het antwoord
         if (response.ok) {
-          document.getElementById("answer").innerText = data.response || "No response generated.";
-          
-          // Display the sources
-          const sourcesList = document.getElementById("sources");
+          answerElement.innerText = data.response || "Geen antwoord gegenereerd.";
           data.sources.forEach(source => {
             const li = document.createElement("li");
+            li.className = "source-link";
             const link = document.createElement("a");
             link.href = source.download_link;
-            link.innerText = `Download Source (Document ID: ${source.document_id})`;
+            link.innerText = `Bron downloaden (Document ID: ${source.document_id})`;
             link.target = "_blank";
             li.appendChild(link);
             sourcesList.appendChild(li);
           });
         } else {
-          document.getElementById("answer").innerText = data.error || "Error";
+          answerElement.innerText = data.error || "Er is een fout opgetreden.";
         }
       } catch (error) {
-        console.error("Error:", error);
-        document.getElementById("answer").innerText = "error";
+        console.error("Fout:", error);
+        answerElement.innerText = "Er is een fout opgetreden. Probeer het opnieuw.";
       }
     }
   </script>
