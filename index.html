@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Question Answering System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f4f4f9;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    h1 {
+      color: #333;
+    }
+    #response {
+      margin-top: 20px;
+    }
+    .source-link {
+      margin-top: 10px;
+    }
+    input, button {
+      font-size: 1.2em;
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ask a Question</h1>
+  <input id="question" type="text" placeholder="Type your question here..." />
+  <button onclick="askQuestion()">Submit</button>
+  <div id="response">
+    <h3>Response:</h3>
+    <p id="answer"></p>
+    <h4>Sources:</h4>
+    <ul id="sources"></ul>
+  </div>
+
+  <script>
+    async function askQuestion() {
+      const question = document.getElementById("question").value;
+      if (!question) {
+        alert("Please enter a question!");
+        return;
+      }
+
+      // Show loading message
+      document.getElementById("answer").innerText = "Loading...";
+      document.getElementById("sources").innerHTML = "";
+
+      try {
+        // Send the question to the Flask backend
+        const response = await fetch("/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: question }),
+        });
+
+        const data = await response.json();
+
+        // Display the response
+        if (response.ok) {
+          document.getElementById("answer").innerText = data.response || "No response generated.";
+          
+          // Display the sources
+          const sourcesList = document.getElementById("sources");
+          data.sources.forEach(source => {
+            const li = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = source.download_link;
+            link.innerText = `Download Source (Document ID: ${source.document_id})`;
+            link.target = "_blank";
+            li.appendChild(link);
+            sourcesList.appendChild(li);
+          });
+        } else {
+          document.getElementById("answer").innerText = data.error || "An error occurred.";
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("answer").innerText = "An error occurred. Please try again.";
+      }
+    }
+  </script>
+</body>
+</html>
