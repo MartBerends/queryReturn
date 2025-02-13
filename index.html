@@ -42,13 +42,13 @@
   </style>
 </head>
 <body>
-  <h1>Ask a Question</h1>
-  <input id="question" type="text" placeholder="Type your question here..." />
-  <button onclick="askQuestion()">Submit</button>
+  <h1>Stel vraag</h1>
+  <input id="question" type="text" placeholder="Stel je vraag hier:" />
+  <button onclick="askQuestion()">Gaan</button>
   <div id="response">
-    <h3>Response:</h3>
+    <h3>Antwoord</h3>
     <p id="answer"></p>
-    <h4>Sources:</h4>
+    <h4>Bronnen gebruikt</h4>
     <ul id="sources"></ul>
   </div>
 
@@ -56,12 +56,12 @@
     async function askQuestion() {
       const question = document.getElementById("question").value;
       if (!question) {
-        alert("Please enter a question!");
+        alert("wel iets invullen");
         return;
       }
 
       // Show loading message
-      document.getElementById("answer").innerText = "Loading...";
+      document.getElementById("answer").innerText = "Laden";
       document.getElementById("sources").innerHTML = "";
 
       try {
@@ -90,11 +90,11 @@
             sourcesList.appendChild(li);
           });
         } else {
-          document.getElementById("answer").innerText = data.error || "An error occurred.";
+          document.getElementById("answer").innerText = data.error || "Error";
         }
       } catch (error) {
         console.error("Error:", error);
-        document.getElementById("answer").innerText = "An error occurred. Please try again.";
+        document.getElementById("answer").innerText = "error";
       }
     }
   </script>
