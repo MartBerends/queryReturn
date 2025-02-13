@@ -34,16 +34,16 @@ def get_top_matches(query_embedding, top_n=TOP_N):
     query_embedding_str = ', '.join(map(str, query_embedding))  # Convert embedding to string for SQL
     query = f"""
     WITH query_embedding AS (
-        SELECT ARRAY[{query_embedding_str}] AS embedding
+        SELECT ARRAY[{query_embedding_str}] AS query_embedding  -- Rename query embedding
     )
     SELECT 
-        document_id, 
-        text, 
-        SQRT(SUM(POW(e.value - query_embedding.embedding[OFFSET(i)], 2))) AS distance
-    FROM `{EMBEDDING_TABLE_ID}`, 
-         query_embedding, 
-         UNNEST(embedding) AS e WITH OFFSET i  -- Give alias 'e' to unnested embedding
-    GROUP BY document_id, text
+        d.document_id, 
+        d.text, 
+        SQRT(SUM(POW(d.embedding[OFFSET(i)] - qe.query_embedding[OFFSET(i)], 2))) AS distance
+    FROM `{EMBEDDING_TABLE_ID}` AS d, 
+         query_embedding AS qe,
+         UNNEST(d.embedding) WITH OFFSET i  -- Explicitly use 'd.embedding'
+    GROUP BY d.document_id, d.text
     ORDER BY distance ASC
     LIMIT {top_n}
     """
