@@ -23,6 +23,19 @@ bq_client = bigquery.Client()
 embedding_model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
 mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID, timeout=30)
 
+def generate_pdf_links(top_matches):
+    """Generate download links for the top matches."""
+    base_url = "https://gegevensmagazijn.tweedekamer.nl/OData/v4/2.0/Document"
+    sources = []
+    for _, row in top_matches.iterrows():
+        document_id = row["document_id"]
+        download_link = f"{base_url}({document_id})/resource"
+        sources.append({
+            "document_id": document_id,
+            "download_link": download_link,
+            "distance": row["distance"]  # Include distance for reference
+        })
+    return sources
 
 def get_query_embedding(query_text):
     """Generate an embedding for the input query."""
@@ -72,16 +85,18 @@ def query():
         # No matches found, use the query itself as the context
         context = "Jij weet zoveel dingen van de wereld, ook deze vraag kan jij beantwoorden ondanks dat je er niet helemaal zeker van bent, geef antwoord op deze vraag:"
         full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
+        sources = []
     else:
         # Matches found, use them as the context
         context = "\n\n".join(top_matches["text"].tolist())
+        sources = generate_pdf_links(top_matches)
         full_prompt = (
             f"Jij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\n"
             f"Context:\n{context}\n\n"
             f"geef antwoord op de volgende vraag en de bovenstaande informatie:\n"
             f"{query_text}"
 )
-
+   
     # Step 3: Call the model for response generation
     try:
         resp = mistral_client.chat.complete(
@@ -92,7 +107,7 @@ def query():
         )
         return jsonify({
             "response": resp.choices[0].message.content,
-            "sources": top_matches.to_dict(orient="records") if not top_matches.empty else [],
+            "sources": sources, 
         })
     except Exception as e:
         print(f"Error generating response: {e}")
