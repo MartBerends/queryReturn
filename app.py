@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, , send_from_directory
 from google.cloud import bigquery
 from vertexai.preview.language_models import ChatModel  # Correct import
 from vertexai.language_models import TextEmbeddingModel
