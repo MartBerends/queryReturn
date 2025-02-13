@@ -13,7 +13,7 @@ PROJECT_ID = "corded-forge-417909"
 REGION = "europe-west4"
 BQ_DATASET_ID = "ProjectRAGMart"
 EMBEDDING_TABLE_ID = f"{PROJECT_ID}.{BQ_DATASET_ID}.document_embeddings"
-TOP_N = int(os.environ.get("TOP_N", 5))
+TOP_N = int(os.environ.get("TOP_N", 3))
 MODEL_NAME = "mistral-nemo"
 MODEL_VERSION = "2407"
 
