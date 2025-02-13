@@ -112,7 +112,10 @@ def query():
     except Exception as e:
         print(f"Error generating response: {e}")
         return jsonify({"error": "Error generating response"}), 500
-
+@app.route("/")
+def index():
+    return send_from_directory(".", "index.html")  # Assumes `index.html` is in the same directory as app.py
+    
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)  # Only for local
