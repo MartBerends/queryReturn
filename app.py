@@ -71,12 +71,17 @@ def query():
 
     if  top_matches.empty:
         # No matches found, use the query itself as the context
-        context = "You have become an all knowing person, any question that is asked will be responded by you with an answer even if you are unsure"
+        context = "Jij weet zoveel dingen van de wereld, ook deze vraag kan jij beantwoorden ondanks dat je er niet helemaal zeker van bent, geef antwoord op deze vraag:"
         full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
     else:
         # Matches found, use them as the context
         context = "\n\n".join(top_matches["text"].tolist())
-        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
+        full_prompt = (
+            f"Jij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\n"
+            f"Context:\n{context}\n\n"
+            f"geef antwoord op de volgende vraag en de bovenstaande informatie:\n"
+            f"{query_text}"
+)
 
     # Step 3: Call the model for response generation
     try:
