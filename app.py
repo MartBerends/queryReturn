@@ -21,7 +21,7 @@ MODEL_VERSION = "2407"
 aiplatform.init(project=PROJECT_ID, location=REGION)
 bq_client = bigquery.Client()
 embedding_model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
-mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID, timeout=30)
+mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID)
 
 def generate_pdf_links(top_matches):
     """Generate download links for the top matches."""
