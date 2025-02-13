@@ -21,7 +21,7 @@ MODEL_VERSION = "2407"
 aiplatform.init(project=PROJECT_ID, location=REGION)
 bq_client = bigquery.Client()
 embedding_model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
-mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID)
+mistral_client = MistralGoogleCloud(region=REGION, project_id=PROJECT_ID, timeout=30)
 
 
 def get_query_embedding(query_text):
