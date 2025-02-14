@@ -111,8 +111,8 @@ def query():
         try:
             # Send PDF links as the first chunk of the response
             if sources:
-            pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
-            yield f"Bronnen:\n{pdf_links}\n\n"
+                pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
+                yield f"Bronnen:\n{pdf_links}\n\n"
     
             # Stream the assistant's generated response
             stream = mistral_client.chat.stream(
