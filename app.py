@@ -100,16 +100,19 @@ def query():
             f"{query_text}"
         )
 
-    # Combine chat history with the current prompt
+    # Combine chat history into the prompt
     history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
-    full_prompt = f"{history_as_prompt}\n\n{full_prompt}"
+    
+    # Avoid appending the latest user question twice
+    full_prompt = f"{history_as_prompt}\n\nJij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\nContext:\n{context}\n\ngeef antwoord op de volgende vraag en de bovenstaande informatie:\n{query_text}"
+
      # Stream response from the model
     def generate_response():
         try:
             # Send PDF links as the first chunk of the response
             if sources:
-                pdf_links = "\n".join([f"- {source['download_link']}" for source in sources])
-                yield f"Bronnen:\n{pdf_links}\n\n"  # Send the links first
+            pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
+            yield f"Bronnen:\n{pdf_links}\n\n"
     
             # Stream the assistant's generated response
             stream = mistral_client.chat.stream(
