@@ -106,71 +106,68 @@
 
   <script>
     let chatHistory = []; // Store the chat history
-    
-    async function askQuestion() {
-      const questionInput = document.getElementById("question");
-      const question = questionInput.value;
-    
-      if (!question) {
-        alert("Typ een vraag!");
-        return;
-      }
-    
-      // Display user question in the chat
-      addMessage("user", question);
-      questionInput.value = ""; // Clear input field
-    
-      // Create an empty assistant message for streaming
-      const assistantMessageElement = addMessage("assistant", "");
-    
-      try {
-        const response = await fetch("/query", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: question,
-            chat_history: chatHistory, // Send chat history to backend
-          }),
-        });
-    
-        if (!response.body) {
-          throw new Error("No response body received.");
-        }
-    
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let chunk;
-    
-        while (!(chunk = await reader.read()).done) {
-          const text = decoder.decode(chunk.value);
-    
-          // If the chunk includes "Bronnen:", treat it as links
-          if (text.startsWith("Bronnen:")) {
-            const links = text.split("\n").slice(1); // Extract the links
-            links.forEach(link => {
-              if (link.trim()) {
-                const linkElement = document.createElement("a");
-                linkElement.href = link.trim();
-                linkElement.innerText = link.trim();
-                linkElement.target = "_blank";
-                assistantMessageElement.appendChild(linkElement);
-                assistantMessageElement.appendChild(document.createElement("br"));
-              }
-            });
-          } else {
-            // Append regular text to the assistant's message
-            assistantMessageElement.innerText += text;
-          }
-        }
-    
-        // Update the chat history
-        chatHistory.push({ role: "user", content: question });
-        chatHistory.push({ role: "assistant", content: assistantMessageElement.innerText });
-      } catch (error) {
-        console.error("Fout:", error);
-        assistantMessageElement.innerText = "Er is een fout opgetreden. Probeer het opnieuw.";
-      }
+   async function askQuestion() {
+    const questionInput = document.getElementById("question");
+    const question = questionInput.value;
+  
+    if (!question) {
+      alert("Typ een vraag!");
+      return;
     }
+  
+    // Display user question in the chat
+    addMessage("user", question);
+    questionInput.value = ""; // Clear input field
+  
+    // Create an empty assistant message for streaming
+    const assistantMessageElement = addMessage("assistant", "");
+  
+    try {
+      const response = await fetch("/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: question,
+          chat_history: chatHistory, // Send chat history to backend
+        }),
+      });
+  
+      if (!response.body) {
+        throw new Error("No response body received.");
+      }
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let chunk;
+  
+      while (!(chunk = await reader.read()).done) {
+        const text = decoder.decode(chunk.value);
+  
+        // If the chunk includes "Bronnen:", parse links
+        if (text.startsWith("Bronnen:")) {
+          const links = text.split("\n").slice(1); // Extract the links
+          links.forEach(link => {
+            if (link.trim().startsWith("<a")) {
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = link.trim(); // Safely parse HTML link
+              assistantMessageElement.appendChild(tempDiv.firstChild);
+              assistantMessageElement.appendChild(document.createElement("br"));
+            }
+          });
+        } else {
+          // Append regular text to the assistant's message
+          assistantMessageElement.innerText += text;
+        }
+      }
+  
+      // Update the chat history
+      chatHistory.push({ role: "user", content: question });
+      chatHistory.push({ role: "assistant", content: assistantMessageElement.innerText });
+    } catch (error) {
+      console.error("Fout:", error);
+      assistantMessageElement.innerText = "Er is een fout opgetreden. Probeer het opnieuw.";
+    }
+  }
 
 
     function addMessage(role, content) {
