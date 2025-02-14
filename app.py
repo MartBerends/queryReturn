@@ -69,32 +69,69 @@ def get_top_matches(query_embedding, top_n=TOP_N):
 
 
 
-
 @app.route("/query", methods=["POST"])
 def query():
     data = request.get_json()
     query_text = data.get("query", "")
-    chat_history = data.get("chat_history", [])  # Retrieve the full chat history
+    chat_history = data.get("chat_history", [])
 
-    # Combine chat history into a prompt
+    # Step 1: Generate query embedding
+    query_embedding = get_query_embedding(query_text)
+
+    # Step 2: Retrieve top matching documents
+    top_matches = get_top_matches(query_embedding)
+
+    if top_matches.empty:
+        # No matches found, fallback to generic context
+        context = (
+            "Jij weet zoveel dingen van de wereld, ook deze vraag kan jij beantwoorden "
+            "ondanks dat je er niet helemaal zeker van bent, geef antwoord op deze vraag:"
+        )
+        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
+        sources = []
+    else:
+        # Matches found, use documents as context
+        context = "\n\n".join(top_matches["text"].tolist())
+        sources = generate_pdf_links(top_matches)
+        full_prompt = (
+            f"Jij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\n"
+            f"Context:\n{context}\n\n"
+            f"geef antwoord op de volgende vraag en de bovenstaande informatie:\n"
+            f"{query_text}"
+        )
+
+    # Combine chat history with the current prompt
     history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
-    full_prompt = (
-        f"{history_as_prompt}\n\nUser: {query_text}\nAssistant:"
-    )
+    full_prompt = f"{history_as_prompt}\n\n{full_prompt}"
 
-    # Call the model
+
+
+ # Stream response from the model
+def generate_response():
     try:
-        resp = mistral_client.chat.complete(
+        # Send PDF links as the first chunk of the response
+        if sources:
+            pdf_links = "\n".join([f"- {source['download_link']}" for source in sources])
+            yield f"Bronnen:\n{pdf_links}\n\n"  # Send the links first
+
+        # Stream the assistant's generated response
+        stream = mistral_client.chat.stream(
             model=f"{MODEL_NAME}-{MODEL_VERSION}",
+            max_tokens=1024,
             messages=[
-                {"role": "user", "content": full_prompt},
+                {"role": "user", "content": full_prompt}
             ],
         )
-        assistant_response = resp.choices[0].message.content
-        return jsonify({"response": assistant_response})
+
+        for chunk in stream:
+            yield chunk.data.choices[0].delta.content  # Stream the assistant's response
     except Exception as e:
-        print(f"Error generating response: {e}")
-        return jsonify({"error": "Error generating response"}), 500
+        yield f"An error occurred: {e}"
+
+# Stream the response to the frontend
+return Response(generate_response(), content_type="text/plain")
+
+
 @app.route("/")
 def index():
     return send_from_directory(".", "index.html")  # Assumes `index.html` is in the same directory as app.py
