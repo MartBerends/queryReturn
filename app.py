@@ -104,7 +104,7 @@ def query():
         f"{query_text}"
         f"Dit is ons gesprek tot zover:{history_as_prompt}\n\n"
     ) 
-    
+    print(full_prompt)
     
     # Stream response from the model
     def generate_response():
