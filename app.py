@@ -74,7 +74,6 @@ def query():
     data = request.get_json()
     query_text = data.get("query", "")
     chat_history = data.get("chat_history", [])
-
     # Step 1: Generate query embedding
     query_embedding = get_query_embedding(query_text)
 
@@ -94,7 +93,7 @@ def query():
         context = "\n\n".join(top_matches["text"].tolist())
         sources = generate_pdf_links(top_matches)
         full_prompt = (
-            f"Jij bent een behulpzame assistent (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
+            f"Jij bent een behulpzame assistent op het gebied van nederlandse politiek (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
             f"Context:\n{context}\n\n"
             f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
             f"{query_text}"
@@ -102,10 +101,16 @@ def query():
 
     # Combine chat history into the prompt
     # Combine chat history with the current prompt
-    full_prompt = f"{history_as_prompt}\n\n{full_prompt}"
     history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
+    full_prompt = (
+        f"Jij bent een behulpzame assistent op het gebied van nederlandse politiek (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
+        f"Context:\n{context}\n\n"
+        f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
+        f"{query_text}"
+    ) 
     
-     # Stream response from the model
+    
+    # Stream response from the model
     def generate_response():
         try:
             # Send PDF links as the first chunk of the response
