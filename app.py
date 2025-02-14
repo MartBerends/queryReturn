@@ -92,7 +92,7 @@ def query():
         # Matches found, use documents as context
         context = "\n\n".join(top_matches["text"].tolist())
         sources = generate_pdf_links(top_matches)
-        )
+        
 
     # Combine chat history into the prompt
     # Combine chat history with the current prompt
