@@ -103,32 +103,29 @@ def query():
     # Combine chat history with the current prompt
     history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
     full_prompt = f"{history_as_prompt}\n\n{full_prompt}"
-
-
-
- # Stream response from the model
-def generate_response():
-    try:
-        # Send PDF links as the first chunk of the response
-        if sources:
-            pdf_links = "\n".join([f"- {source['download_link']}" for source in sources])
-            yield f"Bronnen:\n{pdf_links}\n\n"  # Send the links first
-
-        # Stream the assistant's generated response
-        stream = mistral_client.chat.stream(
-            model=f"{MODEL_NAME}-{MODEL_VERSION}",
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": full_prompt}
-            ],
-        )
-
-        for chunk in stream:
-            yield chunk.data.choices[0].delta.content  # Stream the assistant's response
-    except Exception as e:
-        yield f"An error occurred: {e}"
-
-    # Stream the response to the frontend
+     # Stream response from the model
+    def generate_response():
+        try:
+            # Send PDF links as the first chunk of the response
+            if sources:
+                pdf_links = "\n".join([f"- {source['download_link']}" for source in sources])
+                yield f"Bronnen:\n{pdf_links}\n\n"  # Send the links first
+    
+            # Stream the assistant's generated response
+            stream = mistral_client.chat.stream(
+                model=f"{MODEL_NAME}-{MODEL_VERSION}",
+                max_tokens=1024,
+                messages=[
+                    {"role": "user", "content": full_prompt}
+                ],
+            )
+    
+            for chunk in stream:
+                yield chunk.data.choices[0].delta.content  # Stream the assistant's response
+        except Exception as e:
+            yield f"An error occurred: {e}"
+    
+        # Stream the response to the frontend
     return Response(generate_response(), content_type="text/plain")
 
 
