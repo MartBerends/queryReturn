@@ -74,30 +74,15 @@ def get_top_matches(query_embedding, top_n=TOP_N):
 def query():
     data = request.get_json()
     query_text = data.get("query", "")
+    chat_history = data.get("chat_history", [])  # Retrieve the full chat history
 
-    # Step 1: Generate query embedding
-    query_embedding = get_query_embedding(query_text)
+    # Combine chat history into a prompt
+    history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
+    full_prompt = (
+        f"{history_as_prompt}\n\nUser: {query_text}\nAssistant:"
+    )
 
-    # Step 2: Retrieve top matching documents
-    top_matches = get_top_matches(query_embedding)
-
-    if  top_matches.empty:
-        # No matches found, use the query itself as the context
-        context = "Jij weet zoveel dingen van de wereld, ook deze vraag kan jij beantwoorden ondanks dat je er niet helemaal zeker van bent, geef antwoord op deze vraag:"
-        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
-        sources = []
-    else:
-        # Matches found, use them as the context
-        context = "\n\n".join(top_matches["text"].tolist())
-        sources = generate_pdf_links(top_matches)
-        full_prompt = (
-            f"Jij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\n"
-            f"Context:\n{context}\n\n"
-            f"geef antwoord op de volgende vraag en de bovenstaande informatie:\n"
-            f"{query_text}"
-)
-   
-    # Step 3: Call the model for response generation
+    # Call the model
     try:
         resp = mistral_client.chat.complete(
             model=f"{MODEL_NAME}-{MODEL_VERSION}",
@@ -105,10 +90,8 @@ def query():
                 {"role": "user", "content": full_prompt},
             ],
         )
-        return jsonify({
-            "response": resp.choices[0].message.content,
-            "sources": sources, 
-        })
+        assistant_response = resp.choices[0].message.content
+        return jsonify({"response": assistant_response})
     except Exception as e:
         print(f"Error generating response: {e}")
         return jsonify({"error": "Error generating response"}), 500
