@@ -92,11 +92,6 @@ def query():
         # Matches found, use documents as context
         context = "\n\n".join(top_matches["text"].tolist())
         sources = generate_pdf_links(top_matches)
-        full_prompt = (
-            f"Jij bent een behulpzame assistent op het gebied van nederlandse politiek (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
-            f"Context:\n{context}\n\n"
-            f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
-            f"{query_text}"
         )
 
     # Combine chat history into the prompt
@@ -107,6 +102,7 @@ def query():
         f"Context:\n{context}\n\n"
         f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
         f"{query_text}"
+        f"Dit is ons gesprek tot zover:{history_as_prompt}\n\n"
     ) 
     
     
