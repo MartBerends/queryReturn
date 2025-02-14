@@ -94,18 +94,17 @@ def query():
         context = "\n\n".join(top_matches["text"].tolist())
         sources = generate_pdf_links(top_matches)
         full_prompt = (
-            f"Jij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\n"
+            f"Jij bent een behulpzame assistent (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
             f"Context:\n{context}\n\n"
-            f"geef antwoord op de volgende vraag en de bovenstaande informatie:\n"
+            f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
             f"{query_text}"
         )
 
     # Combine chat history into the prompt
+    # Combine chat history with the current prompt
+    full_prompt = f"{history_as_prompt}\n\n{full_prompt}"
     history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
     
-    # Avoid appending the latest user question twice
-    full_prompt = f"{history_as_prompt}\n\nJij bent een behulpzame assistent die de volgende informatie tot zijn beschikking heeft:\n\nContext:\n{context}\n\ngeef antwoord op de volgende vraag en de bovenstaande informatie:\n{query_text}"
-
      # Stream response from the model
     def generate_response():
         try:
