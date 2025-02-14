@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat met een Assistent</title>
   <style>
-    /* Algemene Stijlen */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #f4f4f9;
@@ -21,7 +20,6 @@
       text-align: center;
       color: #00bcd4;
       margin-top: 10px;
-      animation: fadeIn 1s ease-out;
     }
 
     #chat {
@@ -80,7 +78,6 @@
     input:focus {
       outline: none;
       border-color: #26c6da;
-      box-shadow: 0 0 5px #26c6da;
     }
 
     button {
@@ -92,17 +89,10 @@
       border-radius: 5px;
       margin-left: 10px;
       cursor: pointer;
-      transition: background-color 0.3s ease-in-out;
     }
 
     button:hover {
       background-color: #26c6da;
-    }
-
-    /* Animaties */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
   </style>
 </head>
@@ -115,7 +105,7 @@
   </div>
 
   <script>
-    let chatHistory = []; // Store the chat history (questions and answers)
+    let chatHistory = []; // Store the chat history
 
     async function askQuestion() {
       const questionInput = document.getElementById("question");
@@ -130,29 +120,38 @@
       addMessage("user", question);
       questionInput.value = ""; // Clear input field
 
+      // Create an empty assistant message for streaming
+      const assistantMessageElement = addMessage("assistant", "");
+
       try {
-        // Send the question to the Flask backend
         const response = await fetch("/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query: question,
-            chat_history: chatHistory, // Send full chat history to backend
+            chat_history: chatHistory, // Send chat history to backend
           }),
         });
 
-        const data = await response.json();
+        if (!response.body) {
+          throw new Error("No response body received.");
+        }
 
-        // Display the assistant's response
-        const assistantResponse = data.response || "Geen antwoord ontvangen.";
-        addMessage("assistant", assistantResponse);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let chunk;
+
+        while (!(chunk = await reader.read()).done) {
+          const text = decoder.decode(chunk.value);
+          assistantMessageElement.innerText += text; // Append streamed text
+        }
 
         // Update the chat history
         chatHistory.push({ role: "user", content: question });
-        chatHistory.push({ role: "assistant", content: assistantResponse });
+        chatHistory.push({ role: "assistant", content: assistantMessageElement.innerText });
       } catch (error) {
         console.error("Fout:", error);
-        addMessage("assistant", "Er is een fout opgetreden. Probeer het opnieuw.");
+        assistantMessageElement.innerText = "Er is een fout opgetreden. Probeer het opnieuw.";
       }
     }
 
@@ -164,7 +163,8 @@
       messageContent.innerText = content;
       messageDiv.appendChild(messageContent);
       chat.appendChild(messageDiv);
-      chat.scrollTop = chat.scrollHeight; // Scroll to the latest message
+      chat.scrollTop = chat.scrollHeight;
+      return messageContent; // Return the message element for appending streamed content
     }
   </script>
 </body>
