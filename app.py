@@ -128,8 +128,8 @@ def generate_response():
     except Exception as e:
         yield f"An error occurred: {e}"
 
-# Stream the response to the frontend
-return Response(generate_response(), content_type="text/plain")
+    # Stream the response to the frontend
+    return Response(generate_response(), content_type="text/plain")
 
 
 @app.route("/")
