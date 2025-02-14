@@ -124,6 +124,7 @@ def query():
             )
     
             for chunk in stream:
+                print(chunk)  # Log the raw chunk
                 yield chunk.data.choices[0].delta.content  # Stream the assistant's response
         except Exception as e:
             yield f"An error occurred: {e}"
