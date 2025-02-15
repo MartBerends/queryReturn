@@ -105,28 +105,48 @@ def query():
         f"Dit is ons gesprek tot zover:{history_as_prompt}\n\n"
     ) 
     print(full_prompt)
-    
-    # Stream response from the model
+
     def generate_response():
-        try:
-            # Send PDF links as the first chunk of the response
-            if sources:
-                pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
-                yield f"Bronnen:\n{pdf_links}\n\n"
+    try:
+        stream = client.chat.stream(
+            model="mistral-nemo-2407",
+            max_tokens=1024,
+            messages=[
+                {"role": "user", "content": full_prompt}
+            ],
+        )
+        for chunk in stream:
+            print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
+            try:
+                yield chunk.data.choices[0].delta.content
+            except (IndexError, AttributeError, KeyError) as e:
+                print(f"Error parsing chunk: {e}")
+                yield "Fout in het ontvangen antwoord. Probeer het opnieuw."
+    except Exception as e:
+        print(f"Error during streaming: {e}")
+        yield f"An error occurred: {e}"
     
-            # Stream the assistant's generated response
-            stream = mistral_client.chat.stream(
-                model=f"{MODEL_NAME}-{MODEL_VERSION}",
-                max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": full_prompt}
-                ],
-            )
+    # # Stream response from the model
+    # def generate_response():
+    #     try:
+    #         # Send PDF links as the first chunk of the response
+    #         if sources:
+    #             pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
+    #             yield f"Bronnen:\n{pdf_links}\n\n"
     
-            for chunk in stream:
-                yield chunk.data.choices[0].delta.content  # Stream the assistant's response
-        except Exception as e:
-            yield f"An error occurred: {e}"
+    #         # Stream the assistant's generated response
+    #         stream = mistral_client.chat.stream(
+    #             model=f"{MODEL_NAME}-{MODEL_VERSION}",
+    #             max_tokens=1024,
+    #             messages=[
+    #                 {"role": "user", "content": full_prompt}
+    #             ],
+    #         )
+    
+    #         for chunk in stream:
+    #             yield chunk.data.choices[0].delta.content  # Stream the assistant's response
+    #     except Exception as e:
+    #         yield f"An error occurred: {e}"
     
         # Stream the response to the frontend
     return Response(generate_response(), content_type="text/plain")
