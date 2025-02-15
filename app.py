@@ -107,24 +107,24 @@ def query():
     print(full_prompt)
 
     def generate_response():
-    try:
-        stream = client.chat.stream(
-            model="mistral-nemo-2407",
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": full_prompt}
-            ],
-        )
-        for chunk in stream:
-            print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
-            try:
-                yield chunk.data.choices[0].delta.content
-            except (IndexError, AttributeError, KeyError) as e:
-                print(f"Error parsing chunk: {e}")
-                yield "Fout in het ontvangen antwoord. Probeer het opnieuw."
-    except Exception as e:
-        print(f"Error during streaming: {e}")
-        yield f"An error occurred: {e}"
+        try:
+            stream = client.chat.stream(
+                model="mistral-nemo-2407",
+                max_tokens=1024,
+                messages=[
+                    {"role": "user", "content": full_prompt}
+                ],
+            )
+            for chunk in stream:
+                print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
+                try:
+                    yield chunk.data.choices[0].delta.content
+                except (IndexError, AttributeError, KeyError) as e:
+                    print(f"Error parsing chunk: {e}")
+                    yield "Fout in het ontvangen antwoord. Probeer het opnieuw."
+        except Exception as e:
+            print(f"Error during streaming: {e}")
+            yield f"An error occurred: {e}"
     
     # # Stream response from the model
     # def generate_response():
