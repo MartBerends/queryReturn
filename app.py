@@ -74,6 +74,7 @@ def query():
     data = request.get_json()
     query_text = data.get("query", "")
     chat_history = data.get("chat_history", [])
+
     # Step 1: Generate query embedding
     query_embedding = get_query_embedding(query_text)
 
@@ -86,34 +87,47 @@ def query():
             "Jij weet zoveel dingen van de wereld, ook deze vraag kan jij beantwoorden "
             "ondanks dat je er niet helemaal zeker van bent, geef antwoord op deze vraag:"
         )
-        full_prompt = f"Context: {context}\n\nUser Question: {query_text}"
         sources = []
     else:
         # Matches found, use documents as context
         context = "\n\n".join(top_matches["text"].tolist())
         sources = generate_pdf_links(top_matches)
-        
 
-    # Combine chat history into the prompt
-    # Combine chat history with the current prompt
-    history_as_prompt = "\n".join([f"{entry['role'].capitalize()}: {entry['content']}" for entry in chat_history])
-    full_prompt = (
-        f"Jij bent een behulpzame assistent op het gebied van nederlandse politiek (met een tikje humor en je bent ook een beetje grof) die de volgende informatie tot zijn beschikking heeft:\n\n"
-        f"Context:\n{context}\n\n"
-        f"geef antwoord op de volgende vraag en gebruik daarbij bovenstaande informatie zoveel als mogelijk:\n"
-        f"{query_text}"
-        f"Dit is ons gesprek tot zover:{history_as_prompt}\n\n"
-    ) 
-    print(full_prompt)
+    # Prepare the message structure
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                f"Jij bent een behulpzame assistent op het gebied van Nederlandse politiek (met een tikje humor en je bent ook een beetje grof). "
+                f"Je hebt toegang tot de volgende informatie:\n\n{context}"
+            ),
+        },
+    ]
 
+    # Add previous chat history (if any)
+    for entry in chat_history:
+        messages.append({
+            "role": entry["role"],
+            "content": entry["content"],
+        })
+
+    # Add the current user question
+    messages.append({
+        "role": "user",
+        "content": query_text,
+    })
+
+    # Stream response from the model
     def generate_response():
         try:
+            if sources:
+                pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
+                yield f"Bronnen:\n{pdf_links}\n\n"
+
             stream = mistral_client.chat.stream(
                 model="mistral-nemo-2407",
                 max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": full_prompt}
-                ],
+                messages=messages,
             )
             for chunk in stream:
                 print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
@@ -125,30 +139,8 @@ def query():
         except Exception as e:
             print(f"Error during streaming: {e}")
             yield f"An error occurred: {e}"
-    
-    # # Stream response from the model
-    # def generate_response():
-    #     try:
-    #         # Send PDF links as the first chunk of the response
-    #         if sources:
-    #             pdf_links = "\n".join([f"<a href='{source['download_link']}' target='_blank'>{source['download_link']}</a>" for source in sources])
-    #             yield f"Bronnen:\n{pdf_links}\n\n"
-    
-    #         # Stream the assistant's generated response
-    #         stream = mistral_client.chat.stream(
-    #             model=f"{MODEL_NAME}-{MODEL_VERSION}",
-    #             max_tokens=1024,
-    #             messages=[
-    #                 {"role": "user", "content": full_prompt}
-    #             ],
-    #         )
-    
-    #         for chunk in stream:
-    #             yield chunk.data.choices[0].delta.content  # Stream the assistant's response
-    #     except Exception as e:
-    #         yield f"An error occurred: {e}"
-    
-        # Stream the response to the frontend
+
+    # Stream the response to the frontend
     return Response(generate_response(), content_type="text/plain")
 
 
