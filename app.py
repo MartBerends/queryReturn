@@ -129,8 +129,9 @@ def query():
                 max_tokens=1024,
                 messages=messages,
             )
+            print(f"the full prompt is:{messages}")
             for chunk in stream:
-                print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
+                #print("Raw chunk:", chunk)  # Log the raw chunk to inspect the response
                 try:
                     yield chunk.data.choices[0].delta.content
                 except (IndexError, AttributeError, KeyError) as e:
