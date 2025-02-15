@@ -108,7 +108,7 @@ def query():
 
     def generate_response():
         try:
-            stream = client.chat.stream(
+            stream = mistral_client.chat.stream(
                 model="mistral-nemo-2407",
                 max_tokens=1024,
                 messages=[
