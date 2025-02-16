@@ -143,16 +143,32 @@
         while (!(chunk = await reader.read()).done) {
           const text = decoder.decode(chunk.value);
     
-          // If the chunk includes "Bronnen:", parse links
+            // If the chunk includes "Bronnen:", parse links
           if (text.startsWith("Bronnen:")) {
-            const linksContainer = document.createElement("div");
-            linksContainer.innerHTML = text.replace(/\\n/g, "<br>"); // Parse HTML for links
-            assistantMessageElement.appendChild(linksContainer);
+            // Parse and render hyperlinks
+            const links = text.split("\n").slice(1); // Extract links after "Bronnen:"
+            links.forEach(link => {
+              if (link.trim().startsWith("<a")) {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = link.trim();
+                assistantMessageElement.appendChild(tempDiv.firstChild); // Add hyperlink
+                assistantMessageElement.appendChild(document.createElement("br"));
+              }
+            });
           } else {
-            // Append regular text to the assistant's message
-            assistantMessageElement.innerText += text;
+            // Append regular text without overwriting existing HTML
+            assistantMessageElement.innerHTML += text;
           }
         }
+        //   if (text.startsWith("Bronnen:")) {
+        //     const linksContainer = document.createElement("div");
+        //     linksContainer.innerHTML = text.replace(/\\n/g, "<br>"); // Parse HTML for links
+        //     assistantMessageElement.appendChild(linksContainer);
+        //   } else {
+        //     // Append regular text to the assistant's message
+        //     assistantMessageElement.innerText += text;
+        //   }
+        // }
     
         // Update the chat history
         chatHistory.push({ role: "user", content: question });
