@@ -1,0 +1,14 @@
+requests
+pandas
+pypdf2
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-functions
+google-cloud-bigquery-storage
+google-auth  # Remove explicit version to avoid conflicts
+google-auth-oauthlib
+functions-framework
+pyarrow
+google-cloud-aiplatform
+db-dtypes
+vertexai
