@@ -1,0 +1,14 @@
+gcloud functions deploy fetchData \
+  --runtime python310 \
+  --trigger-http \
+  --entry-point=main_function_name \
+  --source=gs://projectragmart/fetchData.py \
+  --region=eu-west4
+
+
+
+
+gsutil cp fetchData.py gs://projectragmart
+gsutil cp fetchDocuments.py gs://projectragmart
+gsutil cp sendData.py gs://projectragmart
+gsutil cp requirements.txt gs://projectragmart
